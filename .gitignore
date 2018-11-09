@@ -1,0 +1,4 @@
+venv/* 
+*.kate*
+__pycache__/*
+*.sqlite3

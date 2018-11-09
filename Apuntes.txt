@@ -1,0 +1,29 @@
+1. Crear ambiente virtual
+python3.6 -m venv venv
+source venv/bin/activate
+
+2. Instalar dependencias y crear el proyecto de django
+pip install django==2.0.2 graphene==2.0.1 graphene-django==2.0.0 django-filter==1.1.0 django-graphql-jwt==0.1.5
+django-admin startproject hackernews
+cd hackernews
+python manage.py migrate
+python manage.py runserver
+
+3. Crear aplicación
+python manage.py startapp links
+
+Definir un modelo en el archivo models:
+class Link(models.Model):
+    url = models.URLField()
+    description = models.TextField(blank=True)
+
+4. Generar las migraciones de los modelos creados
+python manage.py makemigrations
+
+5. En el proyecto principal se debe agregar en settings c/app creada:
+INSTALLED_APPS = (
+    # After the graphene_django app
+    'links',
+)
+
+
