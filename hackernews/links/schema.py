@@ -3,17 +3,33 @@ from graphene_django import DjangoObjectType # custom type available in Graphene
 
 from .models import Link, Vote # -> Importa el modelo que traduce la información de la base de datos
 from users.schema import UserType
+from django.db.models import Q
 
 class LinkType(DjangoObjectType): #-> Definir el tipo para poder usarlo en queries, mutations and subscriptions
     class Meta:
         model = Link
 
+class VoteType(DjangoObjectType):
+    class Meta:
+        model = Vote
+
 
 class Query(graphene.ObjectType): # -> Definir aqui todos los queries
-    links = graphene.List(LinkType) # -> Debe ser llamado así desde front, como links (va a ser el root del query)
+    links = graphene.List(LinkType, search=graphene.String()) # -> Debe ser llamado así desde front, como links (va a ser el root del query), search permite filtrar
+    votes = graphene.List(VoteType)
 
-    def resolve_links(self, info, **kwargs): # -> Función que resuelve la solucitud a links
+    def resolve_links(self, info, search=None, **kwargs): # -> Función que resuelve la solucitud a links
+        if search:
+            filter = (
+                Q(url__icontains=search) |
+                Q(description__icontains=search)
+            )
+            return Link.objects.filter(filter)
+            
         return Link.objects.all()
+    
+    def resolve_votes(self, info, **kwargs): # -> Función que resuelve la solucitud a links
+        return Vote.objects.all()
 
 # Define una mutación con nombre CreateLink
 class CreateLink(graphene.Mutation):
@@ -56,7 +72,8 @@ class CreateVote(graphene.Mutation):
     def mutate(self, info, link_id):
         user = info.context.user
         if user.is_anonymous:
-            raise Exception('You must be logged to vote!')
+            #raise Exception('You must be logged to vote!')
+            raise GraphQLError('You must be logged to vote!')
 
         link = Link.objects.filter(id=link_id).first()
         if not link:
